@@ -1,0 +1,22 @@
+# Smithery configuration file: https://smithery.ai/docs/build/project-config
+
+startCommand:
+  type: stdio
+  commandFunction:
+    # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
+    |-
+    (config) => ({ command: 'node', args: ['dist/index.js', ...(config.playwrightPath ? ['--playwright-path', config.playwrightPath] : [] )], env: config.anthropicApiKey ? { ANTHROPIC_API_KEY: config.anthropicApiKey } : {} })
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    properties:
+      anthropicApiKey:
+        type: string
+        description: Anthropic API key for authentication
+      playwrightPath:
+        type: string
+        default: "@playwright/mcp@latest"
+        description: Path or package identifier for the Playwright MCP executable
+  exampleConfig:
+    anthropicApiKey: sk-abcdef123456
+    playwrightPath: "@playwright/mcp@latest"
