@@ -1,26 +1,44 @@
 {
-  "name": "@playwright/ai-mcp",
+  "name": "@qckfx/browser-ai",
   "version": "0.1.0",
-  "description": "AI-powered MCP wrapper for Playwright browser automation",
+  "description": "AI-powered MCP wrapper for browser automation",
   "main": "dist/index.js",
   "bin": {
-    "playwright-ai-mcp": "./dist/index.js"
+    "browser-ai": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts",
     "test": "tsx src/test/integration.ts",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run build",
+    "clean": "rm -rf dist"
   },
   "keywords": [
     "playwright",
     "mcp",
     "ai",
     "browser-automation",
-    "claude"
+    "claude",
+    "model-context-protocol",
+    "automation",
+    "testing"
   ],
-  "author": "",
+  "author": "qckfx",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/qckfx/browser-ai.git"
+  },
+  "bugs": {
+    "url": "https://github.com/qckfx/browser-ai/issues"
+  },
+  "homepage": "https://github.com/qckfx/browser-ai#readme",
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.6",
     "@ai-sdk/anthropic": "^1.0.7",

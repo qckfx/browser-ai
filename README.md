@@ -1,6 +1,6 @@
-# Playwright AI MCP Server
+# Browser AI MCP Server
 
-An AI-powered MCP (Model Context Protocol) server that provides a natural language interface to Playwright browser automation. This server acts as an intelligent wrapper around the official Playwright MCP server, allowing you to control browsers using plain English commands through Claude.
+An AI-powered MCP (Model Context Protocol) server that provides a natural language interface to browser automation. This server acts as an intelligent wrapper around the official Playwright MCP server, allowing you to control browsers using plain English commands through Claude.
 
 ## Features
 
@@ -13,13 +13,13 @@ An AI-powered MCP (Model Context Protocol) server that provides a natural langua
 ## Installation
 
 ```bash
-npm install -g @playwright/ai-mcp
+npm install -g @qckfx/browser-ai
 ```
 
 Or use directly with npx:
 
 ```bash
-npx @playwright/ai-mcp
+npx @qckfx/browser-ai
 ```
 
 ## Setup
@@ -29,21 +29,29 @@ npx @playwright/ai-mcp
 First, authenticate with your Claude account:
 
 ```bash
-npx playwright-ai-mcp --auth
+npx browser-ai --auth
 ```
 
 This will open a browser window for OAuth authentication. After authorizing, the token will be saved securely.
 
-### 2. Configure Claude Desktop
+### 2. Configure with Claude Code
 
-Add the following to your Claude Desktop configuration file (`claude_desktop_config.json`):
+For Claude Code users, simply run:
+
+```bash
+claude mcp add @qckfx/browser-ai
+```
+
+### 2. Configure Claude Desktop (Alternative)
+
+If using Claude Desktop instead, add the following to your Claude Desktop configuration file (`claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
-    "playwright-ai": {
+    "browser-ai": {
       "command": "npx",
-      "args": ["@playwright/ai-mcp"],
+      "args": ["@qckfx/browser-ai"],
       "env": {
         "PLAYWRIGHT_MCP_PATH": "@playwright/mcp@latest"
       }
@@ -76,7 +84,7 @@ Once configured, you can use natural language commands in Claude to control brow
 ### Project Structure
 
 ```
-playwright-ai-mcp/
+browser-ai/
 ├── src/
 │   ├── auth/          # OAuth authentication
 │   ├── mcp/           # MCP server and client
@@ -89,7 +97,7 @@ playwright-ai-mcp/
 
 ```bash
 git clone <repository>
-cd playwright-ai-mcp
+cd browser-ai
 npm install
 npm run build
 ```
@@ -107,13 +115,13 @@ npm test
 Enable debug logging:
 
 ```bash
-npx playwright-ai-mcp --debug
+npx browser-ai --debug
 ```
 
 ## Architecture
 
 ```
-User Command → Claude → Playwright AI MCP → AI Agent → Playwright MCP → Browser
+User Command → Claude → Browser AI MCP → AI Agent → Playwright MCP → Browser
                               ↓
                         Claude (via OAuth)
 ```
@@ -131,7 +139,7 @@ The server exposes a single `browser_ai` tool that accepts natural language comm
 
 If you encounter authentication errors:
 
-1. Run `npx playwright-ai-mcp --auth` to re-authenticate
+1. Run `npx browser-ai --auth` to re-authenticate
 2. Ensure you have an active Claude Code subscription
 3. Check that the token hasn't expired
 
