@@ -1,5 +1,7 @@
 # Browser AI MCP Server
 
+[![smithery badge](https://smithery.ai/badge/@qckfx/browser-ai)](https://smithery.ai/server/@qckfx/browser-ai)
+
 An AI-powered MCP (Model Context Protocol) server that provides a natural language interface to browser automation. This server acts as an intelligent wrapper around the official Playwright MCP server, allowing you to control browsers using plain English commands through Claude.
 
 ## Features
@@ -12,6 +14,15 @@ An AI-powered MCP (Model Context Protocol) server that provides a natural langua
 
 ## Installation
 
+### Installing via Smithery
+
+To install Browser AI for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@qckfx/browser-ai):
+
+```bash
+npx -y @smithery/cli install @qckfx/browser-ai --client claude
+```
+
+### Manual Installation
 ```bash
 npm install -g @qckfx/browser-ai
 ```
