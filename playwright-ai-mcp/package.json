@@ -1,0 +1,43 @@
+{
+  "name": "@playwright/ai-mcp",
+  "version": "0.1.0",
+  "description": "AI-powered MCP wrapper for Playwright browser automation",
+  "main": "dist/index.js",
+  "bin": {
+    "playwright-ai-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "test": "tsx src/test/integration.ts",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "playwright",
+    "mcp",
+    "ai",
+    "browser-automation",
+    "claude"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.6",
+    "@ai-sdk/anthropic": "^1.0.7",
+    "ai": "^4.0.29",
+    "zod": "^3.24.1",
+    "commander": "^12.0.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "open": "^10.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.6",
+    "@types/express": "^5.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
