@@ -23,7 +23,7 @@ export class AnthropicOAuth {
   private codeVerifier?: string;
 
   constructor() {
-    const configDir = path.join(os.homedir(), '.playwright-ai-mcp');
+    const configDir = path.join(os.homedir(), '.local', 'browser-ai');
     this.tokenPath = path.join(configDir, 'auth.json');
   }
 

@@ -76,16 +76,8 @@ async function main() {
     return;
   }
 
-  const tokenManager = new TokenManager();
-  const isAuthenticated = await tokenManager.isAuthenticated();
-  
-  if (!isAuthenticated) {
-    console.error('Authentication required. You have two options:');
-    console.error('1. Run with --auth flag to authenticate with your Claude account (recommended for Claude subscribers)');
-    console.error('2. Set the ANTHROPIC_API_KEY environment variable');
-    console.error('\nFor Claude subscribers, option 1 is recommended as usage will be charged to your subscription rather than API costs.');
-    process.exit(1);
-  }
+  // Don't check authentication here - let the server start
+  // Authentication errors will be reported when tools are used
 
   if (options.playwrightPath) {
     process.env.PLAYWRIGHT_MCP_PATH = options.playwrightPath;
@@ -107,12 +99,18 @@ async function main() {
   try {
     await server.start();
   } catch (error) {
-    console.error('Failed to start server:', error);
+    process.stderr.write(`Failed to start server: ${error instanceof Error ? error.message : String(error)}\n`);
+    if (error instanceof Error && error.stack) {
+      process.stderr.write(`Stack trace:\n${error.stack}\n`);
+    }
     process.exit(1);
   }
 }
 
 main().catch((error) => {
-  console.error('Fatal error:', error);
+  process.stderr.write(`Fatal error: ${error instanceof Error ? error.message : String(error)}\n`);
+  if (error instanceof Error && error.stack) {
+    process.stderr.write(`Stack trace:\n${error.stack}\n`);
+  }
   process.exit(1);
 });

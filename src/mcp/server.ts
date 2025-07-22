@@ -23,8 +23,8 @@ export class PlaywrightAIMCPServer {
   constructor() {
     this.server = new Server(
       {
-        name: 'playwright-ai-mcp',
-        version: '0.1.0',
+        name: 'browser-ai-mcp',
+        version: '0.1.1',
       },
       {
         capabilities: {
@@ -100,8 +100,13 @@ export class PlaywrightAIMCPServer {
       const args = BrowserAIToolSchema.parse(params.arguments);
       
       if (!this.agent) {
-        const token = await this.tokenManager.getValidToken();
+        // Check if Playwright client is connected
         const tools = this.playwrightClient.getAvailableTools();
+        if (tools.length === 0) {
+          throw new Error('Playwright MCP server is not connected. Please ensure @playwright/mcp is installed.');
+        }
+        
+        const token = await this.tokenManager.getValidToken();
         this.agent = new BrowserAutomationAgent(token, tools);
         this.agent.setPlaywrightClient(this.playwrightClient);
       }
@@ -118,11 +123,19 @@ export class PlaywrightAIMCPServer {
       };
     } catch (error) {
       if (error instanceof Error && error.message.includes('Authentication required')) {
+        const authError = 'Authentication required. Please either:\n' +
+                         '1. Run "npx @qckfx/browser-ai@latest --auth" to authenticate with your Claude account\n' +
+                         '2. Set the ANTHROPIC_API_KEY environment variable\n\n' +
+                         'For Claude subscribers, option 1 is recommended as usage will be charged to your subscription.';
+        
+        // Also log to stderr for visibility
+        process.stderr.write(`[Browser AI MCP] ${authError}\n`);
+        
         return {
           content: [
             {
               type: 'text',
-              text: 'Authentication required. Please run the server with --auth flag to authenticate with Claude.',
+              text: authError,
             },
           ],
           isError: true,
@@ -142,35 +155,30 @@ export class PlaywrightAIMCPServer {
   }
 
   async start(): Promise<void> {
-    logger.info('Starting Playwright AI MCP server...');
+    logger.info('Starting Browser AI MCP server...');
     
     try {
-      // Check authentication before starting
-      const isAuthenticated = await this.tokenManager.isAuthenticated();
-      if (!isAuthenticated) {
-        const errorMsg = 'Authentication required. Please either:\n' +
-                        '1. Run "npx @qckfx/browser-ai@latest --auth" to authenticate with your Claude account\n' +
-                        '2. Set the ANTHROPIC_API_KEY environment variable';
-        logger.error(errorMsg);
-        throw new Error(errorMsg);
-      }
-      
-      // First, set up the transport but don't connect yet
+      // Set up the transport
       const transport = new StdioServerTransport();
       
-      // Connect to Playwright MCP server first
-      logger.info('Connecting to Playwright MCP server...');
-      await this.playwrightClient.connect();
-      logger.info('Connected to Playwright MCP server');
-      
-      // Log discovered tools for debugging
-      const tools = this.playwrightClient.getAvailableTools();
-      logger.info(`Discovered ${tools.length} tools from Playwright MCP`);
-      
-      // Now connect the MCP server
+      // Connect the MCP server first to ensure we can handle requests
       await this.server.connect(transport);
+      logger.info('MCP server connected');
       
-      logger.info('Playwright AI MCP server started successfully');
+      // Try to connect to Playwright MCP server, but don't fail if it doesn't work
+      try {
+        logger.info('Connecting to Playwright MCP server...');
+        await this.playwrightClient.connect();
+        logger.info('Connected to Playwright MCP server');
+        
+        const tools = this.playwrightClient.getAvailableTools();
+        logger.info(`Discovered ${tools.length} tools from Playwright MCP`);
+      } catch (playwrightError) {
+        logger.warn('Failed to connect to Playwright MCP server:', playwrightError);
+        // Continue anyway - errors will be reported when tools are used
+      }
+      
+      logger.info('Browser AI MCP server started successfully');
     } catch (error) {
       logger.error('Failed to start server:', error);
       throw error;

@@ -4,5 +4,5 @@ dist/
 .DS_Store
 .env
 .env.local
-.playwright-ai-mcp/
+.local/
 auth.json
