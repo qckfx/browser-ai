@@ -59,9 +59,32 @@ export class PlaywrightAIMCPServer {
     return {
       tools: [
         {
-          name: 'browser_ai',
+          name: 'execute',
           description: 'Execute browser automation tasks using natural language commands. This tool interprets your intent and translates it into appropriate browser actions.',
-          inputSchema: BrowserAIToolSchema,
+          inputSchema: {
+            type: 'object',
+            properties: {
+              command: {
+                type: 'string',
+                description: 'Natural language description of the browser task to perform',
+              },
+              context: {
+                type: 'object',
+                properties: {
+                  url: {
+                    type: 'string',
+                    description: 'Current URL or target URL for the automation',
+                  },
+                  sessionId: {
+                    type: 'string',
+                    description: 'Session ID for continuing previous automation',
+                  },
+                },
+                required: [],
+              },
+            },
+            required: ['command'],
+          },
         },
       ],
     };
@@ -69,7 +92,7 @@ export class PlaywrightAIMCPServer {
 
   private async handleToolCall(request: any): Promise<any> {
     const params = request.params;
-    if (params.name !== 'browser_ai') {
+    if (params.name !== 'execute') {
       throw new Error(`Unknown tool: ${params.name}`);
     }
 
@@ -122,9 +145,19 @@ export class PlaywrightAIMCPServer {
     logger.info('Starting Playwright AI MCP server...');
     
     try {
-      await this.playwrightClient.connect();
-      
+      // First, set up the transport but don't connect yet
       const transport = new StdioServerTransport();
+      
+      // Connect to Playwright MCP server first
+      logger.info('Connecting to Playwright MCP server...');
+      await this.playwrightClient.connect();
+      logger.info('Connected to Playwright MCP server');
+      
+      // Log discovered tools for debugging
+      const tools = this.playwrightClient.getAvailableTools();
+      logger.info(`Discovered ${tools.length} tools from Playwright MCP`);
+      
+      // Now connect the MCP server
       await this.server.connect(transport);
       
       logger.info('Playwright AI MCP server started successfully');

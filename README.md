@@ -26,23 +26,39 @@ npx @qckfx/browser-ai
 
 ### 1. Authentication
 
-First, authenticate with your Claude account:
+The Browser AI MCP server requires Anthropic API access. You have two authentication options:
+
+#### Option 1: OAuth Authentication (Recommended for Claude Subscribers)
+If you have a Claude subscription, authenticate with your Claude account to use your subscription credits:
 
 ```bash
-npx browser-ai --auth
+npx @qckfx/browser-ai --auth
 ```
 
-This will open a browser window for OAuth authentication. After authorizing, the token will be saved securely.
+This will open a browser window for OAuth authentication. After authorizing, the token will be saved securely and your API usage will be charged to your Claude subscription rather than requiring separate API credits.
+
+#### Option 2: API Key Authentication
+Alternatively, you can use an Anthropic API key by setting the environment variable:
+
+```bash
+export ANTHROPIC_API_KEY="your-api-key-here"
+```
 
 ### 2. Configure with Claude Code
 
-For Claude Code users, simply run:
+After authentication, add the server to Claude Code:
 
 ```bash
-claude mcp add @qckfx/browser-ai
+claude mcp add browser-ai -- npx --yes @qckfx/browser-ai@latest
 ```
 
-### 2. Configure Claude Desktop (Alternative)
+If using API key authentication, you can pass it as an environment variable:
+
+```bash
+claude mcp add browser-ai --env ANTHROPIC_API_KEY="your-api-key-here" -- npx --yes @qckfx/browser-ai@latest
+```
+
+### 3. Configure Claude Desktop (Alternative)
 
 If using Claude Desktop instead, add the following to your Claude Desktop configuration file (`claude_desktop_config.json`):
 

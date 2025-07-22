@@ -15,9 +15,16 @@ export class TokenManager {
     }
 
     try {
+      // First try OAuth token
       return await this.oauth.getAccessToken();
     } catch (error) {
-      // If token is expired or invalid, trigger auth flow
+      // Fall back to environment variable
+      const apiKey = process.env.ANTHROPIC_API_KEY;
+      if (apiKey) {
+        return apiKey;
+      }
+      
+      // If neither auth method works, throw error
       throw new Error(`Authentication required: ${error}`);
     }
   }
@@ -47,6 +54,10 @@ export class TokenManager {
     } catch {
       return false;
     }
+  }
+  
+  hasApiKey(): boolean {
+    return !!process.env.ANTHROPIC_API_KEY;
   }
 
   getAuthUrl(): string {

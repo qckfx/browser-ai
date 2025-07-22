@@ -80,7 +80,10 @@ async function main() {
   const isAuthenticated = await tokenManager.isAuthenticated();
   
   if (!isAuthenticated) {
-    console.error('Not authenticated. Please run with --auth flag to authenticate.');
+    console.error('Authentication required. You have two options:');
+    console.error('1. Run with --auth flag to authenticate with your Claude account (recommended for Claude subscribers)');
+    console.error('2. Set the ANTHROPIC_API_KEY environment variable');
+    console.error('\nFor Claude subscribers, option 1 is recommended as usage will be charged to your subscription rather than API costs.');
     process.exit(1);
   }
 

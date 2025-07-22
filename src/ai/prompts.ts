@@ -106,7 +106,11 @@ Response: [
 The todo_write tool is for YOUR internal planning only. Use it to track complex multi-step tasks but never mention it in responses. You should use it for tasks requiring 3+ steps to help organize your work.
 </todo-tool>
 
-Remember: Output ONLY the JSON array of tool calls, nothing else.`;
+Remember: 
+- When executing browser tasks, output JSON arrays of tool calls
+- After completing the task and gathering all necessary information, respond with plain text summarizing what was accomplished
+- If the user asked for specific information (like search results), make sure to extract and present that information clearly
+- Use the browser_snapshot tool to get page content when you need to read or extract information from the page`;
 }
 
 export function createToolSelectionPrompt(command: string, context?: any): string {

@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts",
-    "test": "tsx src/test/integration.ts",
+    "test": "for file in src/test/*.ts; do echo \"Running $file...\"; tsx \"$file\" || exit 1; done",
     "lint": "tsc --noEmit",
     "prepublishOnly": "npm run build",
     "clean": "rm -rf dist"

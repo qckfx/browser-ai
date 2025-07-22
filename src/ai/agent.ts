@@ -36,42 +36,7 @@ export class BrowserAutomationAgent {
 
   async executeCommand(command: string, context?: any): Promise<CommandResult> {
     try {
-      const plan = await this.generateToolPlan(command, context);
-      
-      if (plan.steps.length === 0) {
-        return {
-          success: false,
-          response: 'I couldn\'t determine how to execute that command. Please try rephrasing it.',
-        };
-      }
-
-      const result = await this.executePlan(plan);
-      
-      const response = await this.generateResponse(command, plan, result);
-      
-      return {
-        success: result.success,
-        response,
-        details: {
-          plan: plan.steps,
-          results: result.results,
-          errors: result.errors,
-        },
-      };
-    } catch (error) {
-      return {
-        success: false,
-        response: `An error occurred: ${error instanceof Error ? error.message : String(error)}`,
-      };
-    }
-  }
-
-  private async generateToolPlan(command: string, context?: any): Promise<ToolPlan> {
-    const prompt = createToolSelectionPrompt(command, context);
-    
-    const { text } = await generateText({
-      model: this.model,
-      messages: [
+      const messages: any[] = [
         {
           role: 'system',
           content: 'You are Claude Code, Anthropic\'s official CLI for Claude.'
@@ -82,72 +47,118 @@ export class BrowserAutomationAgent {
         },
         {
           role: 'user',
-          content: prompt
+          content: createToolSelectionPrompt(command, context)
         }
-      ],
-      temperature: 0.3,
-      maxTokens: 1000,
-    });
+      ];
 
-    // Always log AI response for debugging
-    console.log('[DEBUG] AI Response:', text);
+      const executedTools: any[] = [];
+      const errors: string[] = [];
+      let finalResponse = '';
+      const maxIterations = 30;
 
-    const plan = this.toolMapper.parseAIResponse(text);
-    
-    // Log parsing result
-    console.log('[DEBUG] Parsed plan:', JSON.stringify(plan, null, 2));
-    
-    return plan;
-  }
+      // Continue conversation until AI returns text instead of tools
+      for (let i = 0; i < maxIterations; i++) {
+        const { text } = await generateText({
+          model: this.model,
+          messages,
+          temperature: 0.3,
+          maxTokens: 1000,
+        });
 
-  private async executePlan(plan: ToolPlan): Promise<ExecutionResult> {
-    const results: any[] = [];
-    const errors: string[] = [];
-    let success = true;
+        console.log(`[DEBUG] Iteration ${i + 1} AI Response:`, text);
 
-    for (const step of plan.steps) {
-      try {
-        // Handle internal tools (like todo_write) differently
-        if (step.tool === 'todo_write') {
-          const result = await this.executeInternalTool(step.tool, step.args);
-          if (result.success) {
-            results.push({
-              tool: step.tool,
-              result: result.result,
-            });
-          } else {
-            errors.push(`${step.tool}: ${result.error}`);
-            success = false;
+        // Try to parse as tool calls
+        try {
+          const plan = this.toolMapper.parseAIResponse(text);
+          
+          if (plan.steps.length === 0) {
+            // AI returned text instead of tools - we're done!
+            finalResponse = text;
             break;
           }
-        } else {
-          // Regular Playwright tools
-          if (!this.playwrightClient) {
-            throw new Error('Playwright client not initialized');
-          }
+
+          // Execute the tools and collect results
+          const toolResults: string[] = [];
           
-          const result = await this.playwrightClient.executeTool(step.tool, step.args);
-          
-          if (result.success) {
-            results.push({
-              tool: step.tool,
-              result: result.result,
-            });
-          } else {
-            errors.push(`${step.tool}: ${result.error}`);
-            success = false;
-            break;
+          for (const step of plan.steps) {
+            try {
+              let result;
+              
+              if (step.tool === 'todo_write') {
+                result = await this.executeInternalTool(step.tool, step.args);
+              } else {
+                if (!this.playwrightClient) {
+                  throw new Error('Playwright client not initialized');
+                }
+                result = await this.playwrightClient.executeTool(step.tool, step.args);
+              }
+              
+              executedTools.push({
+                tool: step.tool,
+                args: step.args,
+                result: result.success ? result.result : result.error
+              });
+
+              if (result.success) {
+                // Include actual result data for browser_snapshot
+                if (step.tool === 'browser_snapshot' && result.result?.content) {
+                  // Include full snapshot content so AI can extract information
+                  toolResults.push(`${step.tool}: Success\nContent:\n${result.result.content}`);
+                } else {
+                  toolResults.push(`${step.tool}: Success${result.result ? '\nResult: ' + JSON.stringify(result.result) : ''}`);
+                }
+              } else {
+                const error = `${step.tool}: ${result.error}`;
+                toolResults.push(error);
+                errors.push(error);
+              }
+            } catch (error) {
+              const errorMsg = `${step.tool}: ${error instanceof Error ? error.message : String(error)}`;
+              toolResults.push(errorMsg);
+              errors.push(errorMsg);
+            }
           }
+
+          // Add assistant message with tool results
+          messages.push({
+            role: 'assistant',
+            content: text
+          });
+
+          // Add user message with tool results
+          messages.push({
+            role: 'user',
+            content: `Tool execution results:\n${toolResults.join('\n')}\n\nContinue with the task. If you have gathered all necessary information, provide a final response to the user about what was accomplished.`
+          });
+
+        } catch (parseError) {
+          // Not valid JSON/tools - treat as final response
+          finalResponse = text;
+          break;
         }
-      } catch (error) {
-        errors.push(`${step.tool}: ${error instanceof Error ? error.message : String(error)}`);
-        success = false;
-        break;
       }
-    }
 
-    return { success, results, errors };
+      if (!finalResponse) {
+        finalResponse = 'I completed the browser automation task but reached the maximum number of steps. ' + 
+                       (errors.length > 0 ? `Some errors occurred: ${errors.join(', ')}` : 'All steps executed successfully.');
+      }
+
+      return {
+        success: errors.length === 0,
+        response: finalResponse,
+        details: {
+          executedTools,
+          errors
+        }
+      };
+    } catch (error) {
+      return {
+        success: false,
+        response: `An error occurred: ${error instanceof Error ? error.message : String(error)}`,
+      };
+    }
   }
+
 
   private async executeInternalTool(toolName: string, args: any): Promise<{ success: boolean; result?: any; error?: string }> {
     try {
@@ -176,39 +187,4 @@ export class BrowserAutomationAgent {
     }
   }
 
-  private async generateResponse(
-    command: string,
-    plan: ToolPlan,
-    result: ExecutionResult
-  ): Promise<string> {
-    const prompt = `
-User command: "${command}"
-
-I executed the following plan:
-${plan.steps.map(s => `- ${s.tool}(${JSON.stringify(s.args)})`).join('\n')}
-
-Results:
-${result.success ? 'All steps completed successfully.' : 'Some steps failed.'}
-${result.errors.length > 0 ? `Errors: ${result.errors.join(', ')}` : ''}
-
-Please provide a brief, user-friendly summary of what was accomplished.`;
-
-    const { text } = await generateText({
-      model: this.model,
-      messages: [
-        {
-          role: 'system',
-          content: 'You are Claude Code, Anthropic\'s official CLI for Claude.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      temperature: 0.5,
-      maxTokens: 200,
-    });
-
-    return text.trim();
-  }
 }
