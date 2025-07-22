@@ -145,6 +145,16 @@ export class PlaywrightAIMCPServer {
     logger.info('Starting Playwright AI MCP server...');
     
     try {
+      // Check authentication before starting
+      const isAuthenticated = await this.tokenManager.isAuthenticated();
+      if (!isAuthenticated) {
+        const errorMsg = 'Authentication required. Please either:\n' +
+                        '1. Run "npx @qckfx/browser-ai@latest --auth" to authenticate with your Claude account\n' +
+                        '2. Set the ANTHROPIC_API_KEY environment variable';
+        logger.error(errorMsg);
+        throw new Error(errorMsg);
+      }
+      
       // First, set up the transport but don't connect yet
       const transport = new StdioServerTransport();
       

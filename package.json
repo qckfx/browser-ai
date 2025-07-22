@@ -1,6 +1,6 @@
 {
   "name": "@qckfx/browser-ai",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "AI-powered MCP wrapper for browser automation",
   "main": "dist/index.js",
   "bin": {
