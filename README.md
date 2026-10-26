@@ -1,6 +1,6 @@
 # Browser AI MCP Server
 
-[![smithery badge](https://smithery.ai/badge/@qckfx/browser-ai)](https://smithery.ai/server/@qckfx/browser-ai)
+[![LightNow capabilities](https://lightnow.ai/badge/io.github.qckfx/browser-ai)](https://lightnow.ai/servers/io.github.qckfx/browser-ai)
 
 An AI-powered MCP (Model Context Protocol) server that provides a natural language interface to browser automation. This server acts as an intelligent wrapper around the official Playwright MCP server, allowing you to control browsers using plain English commands through Claude.
 
